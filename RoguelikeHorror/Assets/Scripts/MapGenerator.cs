@@ -21,6 +21,10 @@ public class MapGenerator : MonoBehaviour
     public int maxRoomSize = 10;
     public int maxRooms = 8; // 생성할 방의 개수
 
+    [Header("Enemy Spawn Settings")]
+    public GameObject enemyPrefab; // 유니티 에디터에서 드래그앤드롭으로 넣어줄 적 프리팹
+    public int enemySpawnCount = 10; // 생성할 적의 마리 수 (원하는 숫자로 조절 가능)
+
     [Header("플레이어")]
     public GameObject player; // Hierarchy의 PF Player를 여기에 드래그 앤 드롭
 
@@ -30,6 +34,8 @@ public class MapGenerator : MonoBehaviour
     void Start()
     {
         GenerateMap();
+        RenderMap();       // 2. 타일맵 시각화
+        SpawnEnemies();    // 3. 적 소환 (이 줄을 추가해 주세요!)
     }
 
     public void GenerateMap()
@@ -152,5 +158,56 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
+    }
+
+    void SpawnEnemies()
+    {
+        // 적 프리팹이 등록되지 않았다면 에러 방지를 위해 리턴
+        if (enemyPrefab == null)
+        {
+            Debug.LogWarning("Enemy Prefab이 MapGenerator에 등록되지 않았습니다!");
+            return;
+        }
+
+        // 1단계: 맵 전체에서 '바닥(1)'인 좌표들을 리스트에 전부 담습니다.
+        List<Vector2Int> validGroundPositions = new List<Vector2Int>();
+
+        for (int x = 0; x < mapWidth; x++)
+        {
+            for (int y = 0; y < mapHeight; y++)
+            {
+                if (mapData[x, y] == 1) // 1은 바닥(Ground)을 뜻함
+                {
+                    // 문제가 되는 줄을 지우고, 아래 Add 줄만 남겨둡니다.
+                    validGroundPositions.Add(new Vector2Int(x, y));
+                }
+            }
+        }
+
+        // 만약 바닥 타일이 아예 없다면 소환을 중단합니다.
+        if (validGroundPositions.Count == 0) return;
+
+        // 2단계: 설정한 마리 수만큼 랜덤하게 자리를 뽑아 적을 소환합니다.
+        int spawnedCount = 0;
+        while (spawnedCount < enemySpawnCount && validGroundPositions.Count > 0)
+        {
+            // 바닥 좌표 리스트 중에서 랜덤한 인덱스 하나 선택
+            int randomIndex = Random.Range(0, validGroundPositions.Count);
+            Vector2Int spawnGridPos = validGroundPositions[randomIndex];
+
+            // 유니티 세계관 좌표(Vector3)로 변환 (+0.5f를 해줘야 타일의 정중앙에 이쁘게 소환됩니다)
+            Vector3 spawnWorldPos = new Vector3(spawnGridPos.x + 0.5f, spawnGridPos.y + 0.5f, 0f);
+
+            // 적 오브젝트 생성!
+            Instantiate(enemyPrefab, spawnWorldPos, Quaternion.identity);
+
+            // ⚠️ 중요: 한 자리에 적이 겹쳐서 여러 마리 나오는 것을 막기 위해 
+            // 방금 뽑힌 자리는 리스트에서 지워버립니다.
+            validGroundPositions.RemoveAt(randomIndex);
+
+            spawnedCount++;
+        }
+
+        Debug.Log($"{spawnedCount}마리의 적이 성공적으로 스폰되었습니다.");
     }
 }

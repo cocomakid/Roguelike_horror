@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - monster
+  - 'Enemy '
+  - Wall
   layers:
   - Default
   - TransparentFX
@@ -53,6 +55,9 @@ TagManager:
     locked: 0
   - name: Player
     uniqueID: 2289155415
+    locked: 0
+  - name: Enemy
+    uniqueID: 551064599
     locked: 0
   m_RenderingLayers:
   - Default
