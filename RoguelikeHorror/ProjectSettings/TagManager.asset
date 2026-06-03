@@ -39,17 +39,20 @@ TagManager:
   - 
   - 
   m_SortingLayers:
-  - name: Background 3
-    uniqueID: 4189426099
+  - name: Default
+    uniqueID: 0
     locked: 0
-  - name: Background 2
-    uniqueID: 4250941897
+  - name: Blackgrond
+    uniqueID: 4189426099
     locked: 0
   - name: Background
     uniqueID: 2425651459
     locked: 0
-  - name: Default
-    uniqueID: 0
+  - name: Wall
+    uniqueID: 4250941897
+    locked: 0
+  - name: Player
+    uniqueID: 2289155415
     locked: 0
   m_RenderingLayers:
   - Default
