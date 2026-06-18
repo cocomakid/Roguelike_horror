@@ -20,9 +20,23 @@ public class FlashlightController : MonoBehaviour
     private bool isDead = false;
 
     void Start()
+{
+    // 📂 [추가] 세이브 매니저를 찾아서 저장된 데이터를 불러옵니다.
+    SaveManager saveManager = FindAnyObjectByType<SaveManager>();
+    if (saveManager != null)
     {
-        currentBattery = maxBattery;
+        PlayerSaveData loadedData = saveManager.LoadGame();
+        if (loadedData != null)
+        {
+            // 저장된 최대 배터리 값이 있다면 그 값으로 동기화합니다! (예: 110)
+            maxBattery = loadedData.maxBattery;
+            Debug.Log("손전등 최대 배터리 로드 성공: " + maxBattery);
+        }
     }
+
+    // 최대 배터리 설정이 끝난 후 현재 배터리를 가득 채워줍니다.
+    currentBattery = maxBattery;
+}
 
     void Update()
     {

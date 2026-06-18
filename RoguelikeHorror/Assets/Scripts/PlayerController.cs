@@ -300,10 +300,23 @@ public class PlayerController : MonoBehaviour
 
         if (collision.CompareTag("BatteryItem")) // 인스펙터에 지정한 배터리 아이템 태그
         {
-            AudioManager audioManager = FindAnyObjectByType<AudioManager>();
-            if (audioManager != null) audioManager.PlaySFX(audioManager.Batteryitem);
+            // 🔊 사운드 재생
+            if (audioManager != null)
+            {
+                audioManager.PlaySFX(audioManager.Batteryitem);
+            }
 
-            // 배터리 충전 로직 (예: battery += 20;)
+            // 🔋 손전등 컴포넌트와 배터리 아이템 컴포넌트를 가져옵니다.
+            FlashlightController flashlight = FindAnyObjectByType<FlashlightController>();
+            BatteryItem batteryItem = collision.GetComponent<BatteryItem>();
+
+            // 둘 다 정상적으로 존재한다면 충전 실행!
+            if (flashlight != null && batteryItem != null)
+            {
+                flashlight.RechargeBattery(batteryItem.rechargeAmount);
+            }
+
+            // 아이템 파괴
             Destroy(collision.gameObject);
         }
 
