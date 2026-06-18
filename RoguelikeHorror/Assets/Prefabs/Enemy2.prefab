@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3222856469782162851}
   - component: {fileID: 6463000258885728916}
   - component: {fileID: 6190584992634182955}
-  - component: {fileID: 3688177420637569296}
   - component: {fileID: 5847234101092881687}
   - component: {fileID: 3756848701401491479}
   m_Layer: 0
@@ -117,26 +116,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &3688177420637569296
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8506623640096457511}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b5f5c8d0cacf40849995f5c7b86d898a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyTraceController
-  moveSpeed: 0.5
-  raycastDistance: 0.2
-  traceDistance: 2
-  maxHp: 3
-  hitFlashDuration: 0.1
-  hpItemPrefab: {fileID: 0}
-  batteryItemPrefab: {fileID: 0}
-  xpItemPrefab: {fileID: 0}
 --- !u!114 &5847234101092881687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149,10 +128,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9e8834eb67883b449d36375fb3f06b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTrace2
-  moveSpeed: 0.5
+  moveSpeed: 1
   raycastDistance: 5
   traceDistance: 3
-  maxHp: 3
+  maxHp: 5
   hitFlashDuration: 0.1
   hpItemPrefab: {fileID: 3629649648924389293, guid: 4562bb3cc4d398d4ebac96d29cb78411,
     type: 3}
