@@ -5,8 +5,14 @@ TagManager:
   serializedVersion: 3
   tags:
   - monster
-  - 'Enemy '
   - Wall
+  - Enemy
+  - Item
+  - hpItem
+  - Xp
+  - Flashlight
+  - BatteryItem
+  - KeyItem
   layers:
   - Default
   - TransparentFX
@@ -14,7 +20,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Flashlight
   - 
   - 
   - 
@@ -58,6 +64,9 @@ TagManager:
     locked: 0
   - name: Enemy
     uniqueID: 551064599
+    locked: 0
+  - name: Item
+    uniqueID: 1436997835
     locked: 0
   m_RenderingLayers:
   - Default

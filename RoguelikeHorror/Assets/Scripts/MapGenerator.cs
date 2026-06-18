@@ -22,11 +22,24 @@ public class MapGenerator : MonoBehaviour
     public int maxRooms = 8; // 생성할 방의 개수
 
     [Header("Enemy Spawn Settings")]
-    public GameObject enemyPrefab; // 유니티 에디터에서 드래그앤드롭으로 넣어줄 적 프리팹
-    public int enemySpawnCount = 10; // 생성할 적의 마리 수 (원하는 숫자로 조절 가능)
+    public GameObject enemyPrefab; // 일반 적 프리팹
+    public int enemySpawnCount = 10; // 생성할 일반 적 마리 수
+
+    // ⭐ 변수 이름의 오타 방지를 위해 기존 선언 그대로 유지합니다.
+    [Header("Enemy Ghost Spawn Settings")]
+    public GameObject enemyghostPrefab; // 유령 적 프리팹
+    public int enemyghostCount = 10; // 생성할 유령 적 마리 수
+
+    [Header("Key Spawn Settings")]
+    public GameObject keyPrefab;
+    public int keySpawnCount = 10;
+
+    [Header("Decoration Spawn Settings")]
+    public GameObject[] decorationPrefabs;
+    public int decorationSpawnCount = 10;
 
     [Header("플레이어")]
-    public GameObject player; // Hierarchy의 PF Player를 여기에 드래그 앤 드롭
+    public GameObject player;
 
     private int[,] mapData;
     private List<RectInt> rooms = new List<RectInt>();
@@ -35,7 +48,10 @@ public class MapGenerator : MonoBehaviour
     {
         GenerateMap();
         RenderMap();       // 2. 타일맵 시각화
-        SpawnEnemies();    // 3. 적 소환 (이 줄을 추가해 주세요!)
+        SpawnEnemies();    // 3. 일반 적 소환
+        SpawnEnemyGhosts(); // 🛠️ [추가] 유령 적 소환 함수 실행!
+        SpawnKey();        // 4. 키 소환
+        Decoration();
     }
 
     public void GenerateMap()
@@ -44,10 +60,8 @@ public class MapGenerator : MonoBehaviour
         wallTilemap.ClearAllTiles();
         rooms.Clear();
 
-        // 0: 비어있음/벽, 1: 바닥
         mapData = new int[mapWidth, mapHeight];
 
-        // 1. 겹치지 않는 방들 랜덤 생성
         for (int i = 0; i < maxRooms; i++)
         {
             int w = Random.Range(minRoomSize, maxRoomSize);
@@ -57,7 +71,6 @@ public class MapGenerator : MonoBehaviour
 
             RectInt newRoom = new RectInt(x, y, w, h);
 
-            // 다른 방과 겹치는지 체크
             bool intersects = false;
             foreach (var room in rooms)
             {
@@ -70,7 +83,6 @@ public class MapGenerator : MonoBehaviour
 
             if (!intersects)
             {
-                // 맵 데이터에 방 파내기 (바닥 = 1)
                 for (int rx = newRoom.x; rx < newRoom.xMax; rx++)
                 {
                     for (int ry = newRoom.y; ry < newRoom.yMax; ry++)
@@ -79,33 +91,28 @@ public class MapGenerator : MonoBehaviour
                     }
                 }
 
-                // 이전 방이 있다면 현재 방과 복도로 연결
                 if (rooms.Count > 0)
                 {
                     Vector2Int prevCenter = GetRoomCenter(rooms[rooms.Count - 1]);
                     Vector2Int currCenter = GetRoomCenter(newRoom);
 
-                    CreateCorridor(prevCenter.x, currCenter.x, prevCenter.y, true);  // 가로 복도
-                    CreateCorridor(prevCenter.y, currCenter.y, currCenter.x, false); // 세로 복도
+                    CreateCorridor(prevCenter.x, currCenter.x, prevCenter.y, true);
+                    CreateCorridor(prevCenter.y, currCenter.y, currCenter.x, false);
                 }
 
                 rooms.Add(newRoom);
             }
         }
 
-        // 2. 바닥(1)의 테두리를 감싸는 외곽 벽(0) 데이터 자동 정렬 및 렌더링
         RenderMap();
 
-        // 3. 첫 번째로 생성된 방의 한가운데로 플레이어 강제 이동
         if (rooms.Count > 0 && player != null)
         {
             Vector2Int startPos = GetRoomCenter(rooms[0]);
-            // 타일맵 좌표를 월드 좌표로 변환 (+0.5f는 타일의 중심점 맞추기)
             player.transform.position = new Vector3(startPos.x + 0.5f, startPos.y + 0.5f, 0);
         }
     }
 
-    // 복도 파내는 함수
     void CreateCorridor(int start, int end, int constant, bool isHorizontal)
     {
         int min = Mathf.Min(start, end);
@@ -114,9 +121,9 @@ public class MapGenerator : MonoBehaviour
         for (int i = min; i <= max; i++)
         {
             if (isHorizontal)
-                mapData[i, constant] = 1; // 가로로 바닥 파기
+                mapData[i, constant] = 1;
             else
-                mapData[constant, i] = 1; // 세로로 바닥 파기
+                mapData[constant, i] = 1;
         }
     }
 
@@ -127,12 +134,9 @@ public class MapGenerator : MonoBehaviour
 
     void RenderMap()
     {
-        // 기존 타일맵 깨끗하게 초기화
         groundTilemap.ClearAllTiles();
         wallTilemap.ClearAllTiles();
 
-        // 1단계: 맵의 전체 범위(mapWidth x mapHeight)를 무조건 '벽 타일'로 꽉 채워버립니다!
-        // 이렇게 하면 맵 너머가 텅 빈 공백이 아니라 '벽 타일이 가득 찬 심연'이 되어 빛이 예쁘게 막힙니다.
         for (int x = 0; x < mapWidth; x++)
         {
             for (int y = 0; y < mapHeight; y++)
@@ -141,7 +145,6 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
-        // 2단계: 방과 복도 데이터(1)가 있는 자리만 '벽 타일을 지우고' 그 자리에 '바닥 타일'을 깝니다.
         for (int x = 0; x < mapWidth; x++)
         {
             for (int y = 0; y < mapHeight; y++)
@@ -149,65 +152,137 @@ public class MapGenerator : MonoBehaviour
                 if (mapData[x, y] == 1)
                 {
                     Vector3Int tilePos = new Vector3Int(x, y, 0);
-
-                    // 벽 타일맵에서 이 자리를 지워야 바닥이 보입니다.
                     wallTilemap.SetTile(tilePos, null);
-
-                    // 바닥 타일맵에 바닥 타일을 깔아줍니다.
                     groundTilemap.SetTile(tilePos, groundTile);
                 }
             }
         }
     }
 
+    // 💡 헬퍼 함수: 중복 코드를 줄이기 위해 맵의 모든 바닥 좌표를 가져오는 함수입니다.
+    List<Vector2Int> GetValidGroundPositions()
+    {
+        List<Vector2Int> validPositions = new List<Vector2Int>();
+        for (int x = 0; x < mapWidth; x++)
+        {
+            for (int y = 0; y < mapHeight; y++)
+            {
+                if (mapData[x, y] == 1)
+                {
+                    validPositions.Add(new Vector2Int(x, y));
+                }
+            }
+        }
+        return validPositions;
+    }
+
     void SpawnEnemies()
     {
-        // 적 프리팹이 등록되지 않았다면 에러 방지를 위해 리턴
         if (enemyPrefab == null)
         {
             Debug.LogWarning("Enemy Prefab이 MapGenerator에 등록되지 않았습니다!");
             return;
         }
 
-        // 1단계: 맵 전체에서 '바닥(1)'인 좌표들을 리스트에 전부 담습니다.
-        List<Vector2Int> validGroundPositions = new List<Vector2Int>();
-
-        for (int x = 0; x < mapWidth; x++)
-        {
-            for (int y = 0; y < mapHeight; y++)
-            {
-                if (mapData[x, y] == 1) // 1은 바닥(Ground)을 뜻함
-                {
-                    // 문제가 되는 줄을 지우고, 아래 Add 줄만 남겨둡니다.
-                    validGroundPositions.Add(new Vector2Int(x, y));
-                }
-            }
-        }
-
-        // 만약 바닥 타일이 아예 없다면 소환을 중단합니다.
+        List<Vector2Int> validGroundPositions = GetValidGroundPositions();
         if (validGroundPositions.Count == 0) return;
 
-        // 2단계: 설정한 마리 수만큼 랜덤하게 자리를 뽑아 적을 소환합니다.
         int spawnedCount = 0;
         while (spawnedCount < enemySpawnCount && validGroundPositions.Count > 0)
         {
-            // 바닥 좌표 리스트 중에서 랜덤한 인덱스 하나 선택
             int randomIndex = Random.Range(0, validGroundPositions.Count);
             Vector2Int spawnGridPos = validGroundPositions[randomIndex];
-
-            // 유니티 세계관 좌표(Vector3)로 변환 (+0.5f를 해줘야 타일의 정중앙에 이쁘게 소환됩니다)
             Vector3 spawnWorldPos = new Vector3(spawnGridPos.x + 0.5f, spawnGridPos.y + 0.5f, 0f);
 
-            // 적 오브젝트 생성!
             Instantiate(enemyPrefab, spawnWorldPos, Quaternion.identity);
-
-            // ⚠️ 중요: 한 자리에 적이 겹쳐서 여러 마리 나오는 것을 막기 위해 
-            // 방금 뽑힌 자리는 리스트에서 지워버립니다.
             validGroundPositions.RemoveAt(randomIndex);
-
             spawnedCount++;
         }
 
-        Debug.Log($"{spawnedCount}마리의 적이 성공적으로 스폰되었습니다.");
+        Debug.Log($"{spawnedCount}마리의 일반 적이 성공적으로 스폰되었습니다.");
+    }
+
+    // 🛠️ [신규 추가] 유령 적을 스폰하는 독립적인 함수입니다!
+    void SpawnEnemyGhosts()
+    {
+        if (enemyghostPrefab == null)
+        {
+            Debug.LogWarning("Enemy Ghost Prefab이 MapGenerator에 등록되지 않았습니다!");
+            return;
+        }
+
+        List<Vector2Int> validGroundPositions = GetValidGroundPositions();
+        if (validGroundPositions.Count == 0) return;
+
+        int spawnedCount = 0;
+        while (spawnedCount < enemyghostCount && validGroundPositions.Count > 0)
+        {
+            int randomIndex = Random.Range(0, validGroundPositions.Count);
+            Vector2Int spawnGridPos = validGroundPositions[randomIndex];
+            Vector3 spawnWorldPos = new Vector3(spawnGridPos.x + 0.5f, spawnGridPos.y + 0.5f, 0f);
+
+            // 유령 적 프리팹 생성
+            Instantiate(enemyghostPrefab, spawnWorldPos, Quaternion.identity);
+
+            // 일반 적이나 다른 유령과 스폰 자리가 겹치지 않도록 리스트에서 제거
+            validGroundPositions.RemoveAt(randomIndex);
+            spawnedCount++;
+        }
+
+        Debug.Log($"{spawnedCount}마리의 유령 적이 성공적으로 스폰되었습니다.");
+    }
+
+    void SpawnKey()
+    {
+        if (keyPrefab == null)
+        {
+            Debug.LogWarning("key Prefab이 MapGenerator에 등록되지 않았습니다!");
+            return;
+        }
+
+        List<Vector2Int> validGroundPositions = GetValidGroundPositions();
+        if (validGroundPositions.Count == 0) return;
+
+        int spawnedCount = 0;
+        while (spawnedCount < keySpawnCount && validGroundPositions.Count > 0)
+        {
+            int randomIndex = Random.Range(0, validGroundPositions.Count);
+            Vector2Int spawnGridPos = validGroundPositions[randomIndex];
+            Vector3 spawnWorldPos = new Vector3(spawnGridPos.x + 0.5f, spawnGridPos.y + 0.5f, 0f);
+
+            Instantiate(keyPrefab, spawnWorldPos, Quaternion.identity);
+            validGroundPositions.RemoveAt(randomIndex);
+            spawnedCount++;
+        }
+
+        Debug.Log($"{spawnedCount}개의 열쇠가 성공적으로 스폰되었습니다.");
+    }
+
+    void Decoration()
+    {
+        if (decorationPrefabs == null || decorationPrefabs.Length == 0)
+        {
+            Debug.LogWarning("Decoration Prefab이 MapGenerator에 등록되지 않았습니다!");
+            return;
+        }
+
+        List<Vector2Int> validGroundPositions = GetValidGroundPositions();
+        if (validGroundPositions.Count == 0) return;
+
+        int spawnedCount = 0;
+        while (spawnedCount < decorationSpawnCount && validGroundPositions.Count > 0)
+        {
+            int randomIndex = Random.Range(0, validGroundPositions.Count);
+            Vector2Int spawnGridPos = validGroundPositions[randomIndex];
+            Vector3 spawnWorldPos = new Vector3(spawnGridPos.x + 0.5f, spawnGridPos.y + 0.5f, 0f);
+
+            GameObject randomDecoration = decorationPrefabs[Random.Range(0, decorationPrefabs.Length)];
+            Instantiate(randomDecoration, spawnWorldPos, Quaternion.identity);
+
+            validGroundPositions.RemoveAt(randomIndex);
+            spawnedCount++;
+        }
+
+        Debug.Log($"{spawnedCount}개의 데코레이션이 성공적으로 스폰되었습니다.");
     }
 }
